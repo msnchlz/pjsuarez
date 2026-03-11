@@ -46,19 +46,21 @@
         </div>
     </main>
 
-    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="if(typeof sent !== 'undefined'){sent=true;}"></iframe>
 
     <script>
         const CSV_FILENAME = 'padron.csv';
         let padronData = [];
 
-        // Función de registro mediante formulario invisible dirigido al iframe
         function registrarConsulta(termino) {
+            // EL FORM_ID PARA ENVÍO DE RESPUESTAS A VECES DIFIERE DEL DE EDICIÓN
+            // USAMOS EL ID DE TU FORMULARIO BASADO EN EL LINK QUE PASASTE
             const FORM_ID = "1-ODiZM8_YbLIG1FIhv37debwbVkSTD1FZ8f7daktd5s";
             const ENTRY_ID = "entry.1491771147";
             
             const form = document.createElement('form');
             form.method = 'POST';
+            // URL corregida para el punto de entrada de respuestas de Google
             form.action = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
             form.target = 'hidden_iframe';
 
@@ -70,8 +72,13 @@
             form.appendChild(input);
             document.body.appendChild(form);
             form.submit();
-            document.body.removeChild(form);
-            console.log("Registro enviado para: " + termino);
+            
+            // Limpieza inmediata
+            setTimeout(() => {
+                document.body.removeChild(form);
+            }, 500);
+            
+            console.log("Consulta registrada: " + termino);
         }
 
         async function loadCSV() {
@@ -79,7 +86,6 @@
                 const response = await fetch(CSV_FILENAME);
                 const data = await response.text();
                 const rows = data.split(/\r?\n/);
-                // Ajustado al formato de tu CSV: separador ";" y salta 7 líneas
                 padronData = rows.slice(7).map(row => row.split(';').map(cell => cell.trim().replace(/^"|"$/g, ''))).filter(row => row.length >= 3);
                 document.getElementById('loadingOverlay').style.display = 'none';
                 document.getElementById('searchInput').disabled = false;
@@ -95,27 +101,22 @@
             
             if (term.length < 3) return;
 
-            // REGISTRO SILENCIOSO
+            // REGISTRO SILENCIOSO (Enter o Lupa disparan esto)
             registrarConsulta(termRaw);
 
-            // FILTRADO Y MUESTRA
+            // FILTRADO
             const filtered = padronData.filter(row => normalizeText(row[0]).includes(term) || row[2].includes(term));
             
             const resultsArea = document.getElementById('resultsArea');
             if (filtered.length === 0) {
-                resultsArea.innerHTML = '<div class="bg-white p-8 rounded-3xl text-center shadow animate-fade-in"><p class="text-gray-400 font-bold uppercase text-xs">No encontrado en el padrón de Suárez</p></div>';
+                resultsArea.innerHTML = '<div class="bg-white p-8 rounded-3xl text-center shadow animate-fade-in"><p class="text-gray-400 font-bold uppercase text-xs">No encontrado</p></div>';
             } else {
                 resultsArea.innerHTML = filtered.slice(0, 20).map(p => `
                     <div class="bg-white rounded-3xl shadow-lg p-6 border border-gray-100 animate-fade-in">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="text-2xl font-black text-gray-800">${p[0]}</h3>
-                                <p class="text-lg font-medium text-gray-500">${p[1]}</p>
-                            </div>
-                            <span class="bg-blue-100 text-blue-700 text-[9px] font-black px-2 py-1 rounded uppercase">Afiliado PJ</span>
-                        </div>
+                        <h3 class="text-2xl font-black text-gray-800">${p[0]}</h3>
+                        <p class="text-lg font-medium text-gray-500 mb-4">${p[1]}</p>
                         <div class="bg-blue-50 p-4 rounded-2xl flex justify-between mb-4">
-                            <span class="text-blue-900/40 font-bold text-[10px] uppercase tracking-tighter">Documento</span>
+                            <span class="text-blue-900/40 font-bold text-[10px] uppercase">DNI</span>
                             <span class="text-xl font-black text-blue-900">${p[2]}</span>
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
