@@ -17,15 +17,15 @@
 
     <header class="pj-gradient text-white py-10 shadow-xl text-center flex flex-col items-center">
         <img src="logo.jpg" alt="Logo PJ" class="w-32 h-32 object-contain rounded-full border-4 border-white/20 bg-white mb-6" onerror="this.style.display='none';">
-        <h1 class="text-3xl font-black uppercase tracking-tighter">Partido Justicialista</h1>
-        <h2 class="text-xl font-bold opacity-90">Coronel Suárez</h2>
+        <h1 class="text-3xl font-black uppercase tracking-tighter text-white">Partido Justicialista</h1>
+        <h2 class="text-xl font-bold opacity-90 text-white">Coronel Suárez</h2>
     </header>
 
     <main class="flex-grow container mx-auto px-4 py-8 max-w-2xl">
         <div class="bg-white rounded-3xl shadow-2xl p-8 mb-8 border border-gray-100 relative">
             <div id="loadingOverlay" class="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900 mb-4"></div>
-                <p class="text-blue-900 font-bold animate-pulse">CARGANDO PADRÓN...</p>
+                <p class="text-blue-900 font-bold animate-pulse uppercase text-xs">Cargando Padrón...</p>
             </div>
 
             <label class="block text-xs font-black text-blue-900 mb-4 uppercase tracking-widest">Ingrese Apellido o DNI</label>
@@ -50,11 +50,18 @@
         const CSV_FILENAME = 'padron.csv';
         let padronData = [];
 
-        async function registrarConsulta(termino) {
+        // Función corregida para envío forzado
+        function registrarConsulta(termino) {
             const FORM_ID = "1-ODiZM8_YbLIG1FIhv37debwbVkSTD1FZ8f7daktd5s";
             const ENTRY_ID = "entry.1491771147";
+            
+            // Construimos la URL de envío directo
             const url = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse?${ENTRY_ID}=${encodeURIComponent(termino)}&submit=Submit`;
-            fetch(url, { mode: 'no-cors' });
+            
+            // Usamos una técnica de imagen para evitar bloqueos de CORS y asegurar el envío
+            const img = new Image();
+            img.src = url;
+            console.log("Registro enviado: " + termino);
         }
 
         async function loadCSV() {
@@ -72,42 +79,46 @@
 
         function realizarBusqueda() {
             const input = document.getElementById('searchInput');
-            const term = normalizeText(input.value.trim());
+            const termRaw = input.value.trim();
+            const term = normalizeText(termRaw);
             
             if (term.length < 3) return;
 
-            // 1. Registramos en Google Forms
-            registrarConsulta(input.value);
+            // REGISTRO: Enviamos el término original tal cual lo escribió el usuario
+            registrarConsulta(termRaw);
 
-            // 2. Filtramos y mostramos resultados
+            // FILTRO
             const filtered = padronData.filter(row => normalizeText(row[0]).includes(term) || row[2].includes(term));
             
             const resultsArea = document.getElementById('resultsArea');
             if (filtered.length === 0) {
-                resultsArea.innerHTML = '<div class="bg-white p-8 rounded-3xl text-center shadow">No se encontraron resultados</div>';
+                resultsArea.innerHTML = '<div class="bg-white p-8 rounded-3xl text-center shadow animate-fade-in"><p class="text-gray-400 font-bold">No encontrado en el padrón distrital</p></div>';
             } else {
                 resultsArea.innerHTML = filtered.slice(0, 20).map(p => `
                     <div class="bg-white rounded-3xl shadow-lg p-6 border border-gray-100 animate-fade-in">
-                        <h3 class="text-2xl font-black text-gray-800">${p[0]}</h3>
-                        <p class="text-lg font-medium text-gray-500 mb-4">${p[1]}</p>
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-2xl font-black text-gray-800">${p[0]}</h3>
+                                <p class="text-lg font-medium text-gray-500">${p[1]}</p>
+                            </div>
+                            <span class="bg-green-100 text-green-700 text-[9px] font-black px-2 py-1 rounded uppercase">Afiliado</span>
+                        </div>
                         <div class="bg-blue-50 p-4 rounded-2xl flex justify-between mb-4">
-                            <span class="text-blue-900/40 font-bold text-[10px] uppercase">DNI</span>
+                            <span class="text-blue-900/40 font-bold text-[10px] uppercase">Documento</span>
                             <span class="text-xl font-black text-blue-900">${p[2]}</span>
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div class="bg-gray-50 p-4 rounded-2xl text-center"><p class="text-[10px] text-gray-400 uppercase">Mesa</p><p class="text-2xl font-black">${p[5]}</p></div>
-                            <div class="bg-gray-50 p-4 rounded-2xl text-center"><p class="text-[10px] text-gray-400 uppercase">Orden</p><p class="text-2xl font-black">${p[6]}</p></div>
+                            <div class="bg-gray-50 p-4 rounded-2xl text-center"><p class="text-[10px] text-gray-400 uppercase">Mesa</p><p class="text-2xl font-black text-gray-700">${p[5]}</p></div>
+                            <div class="bg-gray-50 p-4 rounded-2xl text-center"><p class="text-[10px] text-gray-400 uppercase">Orden</p><p class="text-2xl font-black text-gray-700">${p[6]}</p></div>
                         </div>
-                        <div class="pt-4 border-t"><p class="font-black text-gray-800 text-sm uppercase">${p[4]}</p></div>
+                        <div class="pt-4 border-t"><p class="font-black text-gray-800 text-xs uppercase"><i class="fas fa-map-marker-alt mr-2 text-red-500"></i>${p[4]}</p></div>
                     </div>
                 `).join('');
             }
         }
 
-        // Botón
+        // Eventos
         document.getElementById('searchButton').addEventListener('click', realizarBusqueda);
-
-        // Enter
         document.getElementById('searchInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') realizarBusqueda();
         });
