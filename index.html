@@ -35,7 +35,7 @@
                     <i class="fas fa-search text-xl"></i>
                 </button>
             </div>
-            <p class="text-[11px] text-gray-400 mt-4 text-center">Haga clic en la lupa para buscar y registrar la consulta.</p>
+            <p class="text-[11px] text-gray-400 mt-4 text-center font-medium">Haga clic en la lupa para buscar y registrar la consulta.</p>
         </div>
 
         <div id="resultsArea" class="space-y-5">
@@ -53,9 +53,9 @@
         let padronData = [];
 
         function registrarConsulta(termino) {
-            // ID DE PREGUNTA CORREGIDO: 783967819
+            // ID EXTRAÍDO DE TU CAPTURA DEL INSPECTOR
             const FORM_ACTION = "https://docs.google.com/forms/d/e/1FAIpQLScz4grdZg80W5CeOf7BQpbxn5jasnryrBFJejWYpfPJZndh4Q/formResponse";
-            const ENTRY_ID = "entry.783967819"; 
+            const ENTRY_ID = "entry.1952667277"; 
             
             const form = document.createElement('form');
             form.method = 'POST';
@@ -74,6 +74,7 @@
             setTimeout(() => {
                 document.body.removeChild(form);
             }, 500);
+            console.log("Consulta registrada exitosamente");
         }
 
         async function loadCSV() {
@@ -81,10 +82,14 @@
                 const response = await fetch(CSV_FILENAME);
                 const data = await response.text();
                 const rows = data.split(/\r?\n/);
+                // Mantiene el formato: salta 7 filas y usa separador ";"
                 padronData = rows.slice(7).map(row => row.split(';').map(cell => cell.trim().replace(/^"|"$/g, ''))).filter(row => row.length >= 3);
                 document.getElementById('loadingOverlay').style.display = 'none';
                 document.getElementById('searchInput').disabled = false;
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error("Error cargando CSV", e);
+                document.getElementById('loadingOverlay').innerHTML = "<p class='text-red-500 font-bold'>Error al cargar padrón</p>";
+            }
         }
 
         const normalizeText = (text) => text.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -96,15 +101,15 @@
             
             if (term.length < 3) return;
 
-            // REGISTRO
+            // REGISTRO SILENCIOSO EN GOOGLE SHEETS
             registrarConsulta(termRaw);
 
-            // FILTRADO
+            // FILTRADO DE DATOS LOCALES
             const filtered = padronData.filter(row => normalizeText(row[0]).includes(term) || row[2].includes(term));
             
             const resultsArea = document.getElementById('resultsArea');
             if (filtered.length === 0) {
-                resultsArea.innerHTML = '<div class="bg-white p-8 rounded-3xl text-center shadow animate-fade-in"><p class="text-gray-400 font-bold uppercase text-xs">No encontrado</p></div>';
+                resultsArea.innerHTML = '<div class="bg-white p-8 rounded-3xl text-center shadow animate-fade-in"><p class="text-gray-400 font-bold uppercase text-xs">No encontrado en el padrón</p></div>';
             } else {
                 resultsArea.innerHTML = filtered.slice(0, 20).map(p => `
                     <div class="bg-white rounded-3xl shadow-lg p-6 border border-gray-100 animate-fade-in">
@@ -123,12 +128,13 @@
                             <div class="bg-gray-50 p-4 rounded-2xl text-center"><p class="text-[10px] text-gray-400 uppercase">Mesa</p><p class="text-2xl font-black text-gray-700">${p[5] || '-'}</p></div>
                             <div class="bg-gray-50 p-4 rounded-2xl text-center"><p class="text-[10px] text-gray-400 uppercase">Orden</p><p class="text-2xl font-black text-gray-700">${p[6] || '-'}</p></div>
                         </div>
-                        <div class="pt-4 border-t"><p class="font-black text-gray-800 text-xs uppercase"><i class="fas fa-map-marker-alt mr-2 text-red-500"></i>${p[4] || 'No asignado'}</p></div>
+                        <div class="pt-4 border-t"><p class="font-black text-gray-800 text-xs uppercase"><i class="fas fa-map-marker-alt mr-2 text-red-500"></i>${p[4] || 'Escuela no asignada'}</p></div>
                     </div>
                 `).join('');
             }
         }
 
+        // Eventos: Clic en lupa y tecla Enter
         document.getElementById('searchButton').addEventListener('click', realizarBusqueda);
         document.getElementById('searchInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') realizarBusqueda();
