@@ -28,14 +28,14 @@
                 <p class="text-blue-900 font-bold animate-pulse uppercase text-xs">Cargando Padrón...</p>
             </div>
 
-            <label class="block text-xs font-black text-blue-900 mb-4 uppercase tracking-widest">Ingrese Apellido o DNI</label>
+            <label class="block text-xs font-black text-blue-900 mb-4 uppercase tracking-widest text-center">Ingrese Apellido o DNI</label>
             <div class="flex gap-2">
                 <input type="text" id="searchInput" placeholder="Ej: Abalos o 36764951" class="flex-grow pl-6 pr-6 py-5 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-blue-500 outline-none text-xl font-medium shadow-inner" disabled>
                 <button id="searchButton" class="bg-blue-600 text-white px-6 rounded-2xl hover:bg-blue-700 transition-colors shadow-lg">
                     <i class="fas fa-search text-xl"></i>
                 </button>
             </div>
-            <p class="text-[11px] text-gray-400 mt-4 text-center">Haga clic en la lupa o presione Enter para buscar y registrar la consulta.</p>
+            <p class="text-[11px] text-gray-400 mt-4 text-center">Haga clic en la lupa para buscar y registrar la consulta.</p>
         </div>
 
         <div id="resultsArea" class="space-y-5">
@@ -53,9 +53,9 @@
         let padronData = [];
 
         function registrarConsulta(termino) {
-            // IDs ACTUALIZADOS SEGÚN TU LINK DE FORMULARIO
+            // ID DE PREGUNTA CORREGIDO: 783967819
             const FORM_ACTION = "https://docs.google.com/forms/d/e/1FAIpQLScz4grdZg80W5CeOf7BQpbxn5jasnryrBFJejWYpfPJZndh4Q/formResponse";
-            const ENTRY_ID = "entry.1084227749";
+            const ENTRY_ID = "entry.783967819"; 
             
             const form = document.createElement('form');
             form.method = 'POST';
@@ -70,7 +70,10 @@
             form.appendChild(input);
             document.body.appendChild(form);
             form.submit();
-            document.body.removeChild(form);
+            
+            setTimeout(() => {
+                document.body.removeChild(form);
+            }, 500);
         }
 
         async function loadCSV() {
@@ -93,8 +96,10 @@
             
             if (term.length < 3) return;
 
+            // REGISTRO
             registrarConsulta(termRaw);
 
+            // FILTRADO
             const filtered = padronData.filter(row => normalizeText(row[0]).includes(term) || row[2].includes(term));
             
             const resultsArea = document.getElementById('resultsArea');
