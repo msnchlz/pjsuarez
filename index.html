@@ -110,29 +110,36 @@
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loadingText = document.getElementById('loadingText');
 
-        async function loadCSV() {
+       async function loadCSV() {
             try {
                 const response = await fetch(CSV_URL);
                 if (!response.ok) throw new Error('Archivo padron.csv no encontrado');
                 
                 const data = await response.text();
+                // Separamos por líneas
                 const rows = data.split(/\r?\n/);
                 
-                // Ignorar las primeras 6 líneas de encabezado del archivo original
+                // IMPORTANTE: 
+                // 1. Usamos .slice(7) para saltar el encabezado que vimos en tu archivo.
+                // 2. Usamos .split(';') porque tu CSV usa punto y coma.
                 padronData = rows.slice(7).map(row => {
-                    return row.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''));
-                }).filter(row => row.length >= 6 && row[0] !== ""); 
+                    return row.split(';').map(cell => cell.trim().replace(/^"|"$/g, ''));
+                }).filter(row => row.length >= 3 && row[0] !== ""); 
 
                 loadingOverlay.style.opacity = '0';
                 setTimeout(() => {
                     loadingOverlay.style.display = 'none';
                     searchInput.disabled = false;
+                    searchInput.focus(); // Enfocar automáticamente para escribir
                 }, 500);
                 
-                console.log("Padron cargado con éxito: " + padronData.length + " afiliados.");
+                console.log("Padron cargado: " + padronData.length + " afiliados.");
             } catch (error) {
                 console.error('Error:', error);
-                loadingText.innerText = "ERROR AL CARGAR padron.csv";
+                loadingText.innerText = "ERROR AL CARGAR DATOS";
+                // ... resto del código de error ...
+            }
+        }
                 loadingText.className = "text-red-600 font-bold text-sm";
                 loadingOverlay.querySelector('.animate-spin').style.display = 'none';
                 
