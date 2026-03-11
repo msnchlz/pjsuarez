@@ -46,22 +46,20 @@
         </div>
     </main>
 
-    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="if(typeof sent !== 'undefined'){sent=true;}"></iframe>
+    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 
     <script>
         const CSV_FILENAME = 'padron.csv';
         let padronData = [];
 
         function registrarConsulta(termino) {
-            // EL FORM_ID PARA ENVÍO DE RESPUESTAS A VECES DIFIERE DEL DE EDICIÓN
-            // USAMOS EL ID DE TU FORMULARIO BASADO EN EL LINK QUE PASASTE
-            const FORM_ID = "1-ODiZM8_YbLIG1FIhv37debwbVkSTD1FZ8f7daktd5s";
-            const ENTRY_ID = "entry.1491771147";
+            // IDs ACTUALIZADOS SEGÚN TU LINK DE FORMULARIO
+            const FORM_ACTION = "https://docs.google.com/forms/d/e/1FAIpQLScz4grdZg80W5CeOf7BQpbxn5jasnryrBFJejWYpfPJZndh4Q/formResponse";
+            const ENTRY_ID = "entry.1084227749";
             
             const form = document.createElement('form');
             form.method = 'POST';
-            // URL corregida para el punto de entrada de respuestas de Google
-            form.action = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
+            form.action = FORM_ACTION;
             form.target = 'hidden_iframe';
 
             const input = document.createElement('input');
@@ -72,13 +70,7 @@
             form.appendChild(input);
             document.body.appendChild(form);
             form.submit();
-            
-            // Limpieza inmediata
-            setTimeout(() => {
-                document.body.removeChild(form);
-            }, 500);
-            
-            console.log("Consulta registrada: " + termino);
+            document.body.removeChild(form);
         }
 
         async function loadCSV() {
@@ -101,10 +93,8 @@
             
             if (term.length < 3) return;
 
-            // REGISTRO SILENCIOSO (Enter o Lupa disparan esto)
             registrarConsulta(termRaw);
 
-            // FILTRADO
             const filtered = padronData.filter(row => normalizeText(row[0]).includes(term) || row[2].includes(term));
             
             const resultsArea = document.getElementById('resultsArea');
@@ -113,8 +103,13 @@
             } else {
                 resultsArea.innerHTML = filtered.slice(0, 20).map(p => `
                     <div class="bg-white rounded-3xl shadow-lg p-6 border border-gray-100 animate-fade-in">
-                        <h3 class="text-2xl font-black text-gray-800">${p[0]}</h3>
-                        <p class="text-lg font-medium text-gray-500 mb-4">${p[1]}</p>
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-2xl font-black text-gray-800">${p[0]}</h3>
+                                <p class="text-lg font-medium text-gray-500">${p[1]}</p>
+                            </div>
+                            <span class="bg-blue-100 text-blue-700 text-[9px] font-black px-2 py-1 rounded uppercase">Afiliado PJ</span>
+                        </div>
                         <div class="bg-blue-50 p-4 rounded-2xl flex justify-between mb-4">
                             <span class="text-blue-900/40 font-bold text-[10px] uppercase">DNI</span>
                             <span class="text-xl font-black text-blue-900">${p[2]}</span>
